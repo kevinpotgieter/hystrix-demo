@@ -25,6 +25,13 @@ public class SlowRunAndFallbackExecutedOnCallingThreadCommand extends HystrixCom
     @Override
     protected Result<String> getFallback() {
         log.info("Returning Lambda to be executed by the actual caller...");
-        return new DeferredResult<String>(() -> COMMAND_GROUP_KEY);
+        return new DeferredResult<>(() -> {
+            try {
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return COMMAND_GROUP_KEY;
+        });
     }
 }

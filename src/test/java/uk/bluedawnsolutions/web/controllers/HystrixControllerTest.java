@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
 public class HystrixControllerTest {
 
     private static final int TEST_EXECUTION_THREAD_POOL = 1;
-    private static final int TOTAL_REQUESTS = 1;
+    private static final int TOTAL_REQUESTS = 5;
     private static final int TOTAL_MINUTES_TO_WAIT_TO_COMPLETE_TEST = 5;
     private final ExecutorService executorService = Executors.newFixedThreadPool(TEST_EXECUTION_THREAD_POOL);
 
@@ -48,19 +48,19 @@ public class HystrixControllerTest {
     @Test
     public void slowRunAndSlowFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-slow-fallback", restTemplate));
-        analyseResults("Execution is slow in run() AND but fallback() takes ages...");
+        analyseResults("Execution is slow in run() AND slow in fallback() - NOT wrapped in a HystrixCommand...");
     }
 
     @Test
     public void slowRunAndDeterministicFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-deterministic-fallback", restTemplate));
-        analyseResults("Execution is slow in run() AND but fallback() takes a deterministic time to execute.");
+        analyseResults("Execution is slow in run() AND slow in fallback(), but because it is wrapped in a HystrixCommand it takes a deterministic amount of time to execute.");
     }
 
     @Test
     public void slowRunAndFallbackExecutionOccurringOnCallingThread() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-fallback-occurring-on-calling-thread", restTemplate));
-        analyseResults("Execution is slow in run() AND but fallback() occurs on the calling thread.");
+        analyseResults("Execution is slow in run() AND slow in fallback(), however the fallback executes on the initiating thread.");
     }
 
 
