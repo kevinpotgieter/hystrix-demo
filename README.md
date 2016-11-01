@@ -22,8 +22,13 @@ See more on the accompanying blog post [here](http://wp.me/sU2Qi-hystrix)
 
 ## IntelliJ IDEA users
 Installing the GrepConsole plugin is suggested if you would like to follow 
-along with the diagram in the blog post (see above). The below grep console configuration
+along with the diagram in the blog post mentioned above. The below grep console configuration
 will highlight the appropriate thread executions which correlate to the diagram.
 
+Diagram from blog:
+![Diagram from blog]
+(https://kevinpotgieter.files.wordpress.com/2016/10/hystrix-thread-execution.jpg)
+
+GrepConsole configuration:
 ![GrepConsole configuration]
 (https://kevinpotgieter.files.wordpress.com/2016/10/screen-shot-2016-10-31-at-09-34-30.png)
