@@ -1,6 +1,8 @@
 package uk.bluedawnsolutions.web.controllers;
 
+import com.netflix.hystrix.Hystrix;
 import org.apache.commons.lang.time.StopWatch;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +23,8 @@ import java.util.stream.IntStream;
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class HystrixControllerTest {
 
-    private static final int TEST_EXECUTION_THREAD_POOL = 1;
-    private static final int TOTAL_REQUESTS = 5;
+    private static final int TEST_EXECUTION_THREAD_POOL = 10;
+    private static final int TOTAL_REQUESTS = 1;//150;
     private static final int TOTAL_MINUTES_TO_WAIT_TO_COMPLETE_TEST = 5;
     private final ExecutorService executorService = Executors.newFixedThreadPool(TEST_EXECUTION_THREAD_POOL);
 
@@ -30,8 +32,12 @@ public class HystrixControllerTest {
     private TestRestTemplate restTemplate;
 
     private CountDownLatch submitCountdownLatch = new CountDownLatch(TOTAL_REQUESTS);
+    private final ConcurrentLinkedQueue<CallResult> testResults = new ConcurrentLinkedQueue<>();
 
-    private final CopyOnWriteArrayList<CallResult> testResults = new CopyOnWriteArrayList<>();
+    @Before
+    public void setup(){
+        System.setProperty("hystrix.command.default.circuitBreaker.enabled", "false");
+    }
 
     @Test
     public void slowRunExecution() throws Exception {
@@ -42,25 +48,39 @@ public class HystrixControllerTest {
     @Test
     public void runFailureSlowFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/delay-in-fallback", restTemplate));
-        analyseResults("Execution where immediate failure occurs in run(), but fallback() takes ages...");
+        analyseResults("Execution where immediate failure occurs in run(), but fallback() takes ages..." +
+                "Expected best time should be close to 2500ms + some processing time.\n" +
+                "We should also NOT see any result messages like: \'Should have timed out by this point!\' \n" +
+                "which would indicate that the timer thread couldn't make it round in time to interrupt the thread.");
     }
 
     @Test
     public void slowRunAndSlowFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-slow-fallback", restTemplate));
-        analyseResults("Execution is slow in run() AND slow in fallback() - NOT wrapped in a HystrixCommand...");
+        analyseResults("Execution is slow in run() AND slow in fallback() which is NOT wrapped in a HystrixCommand..." +
+                "Expected best time should be close to 3500ms + some processing time.\n" +
+                "Anything under 3500ms is because the timer thread couldn't interrupt the worker thread.\n" +
+                "Ideally we should NOT see any result messages like: \'Should have timed out by this point!\' \n" +
+                "which would indicate that the timer thread couldn't make it round in time to interrupt the thread.");
     }
 
     @Test
     public void slowRunAndDeterministicFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-deterministic-fallback", restTemplate));
-        analyseResults("Execution is slow in run() AND slow in fallback(), but because it is wrapped in a HystrixCommand it takes a deterministic amount of time to execute.");
+        analyseResults("Execution is slow in run() AND slow in fallback(), but because it is wrapped in a HystrixCommand it \n" +
+                "takes a deterministic amount of time to execute.\n" +
+                "Expected best time should be close to 2000ms + some processing time.\n" +
+                "We should also NOT see any result messages like: \'Should have timed out by this point!\' \n" +
+                "which would indicate that the timer thread couldn't make it round in time to interrupt the thread.");
     }
 
     @Test
     public void slowRunAndFallbackExecutionOccurringOnCallingThread() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-fallback-occurring-on-calling-thread", restTemplate));
-        analyseResults("Execution is slow in run() AND slow in fallback(), however the fallback executes on the initiating thread.");
+        analyseResults("Execution is slow in run() AND slow in fallback(), however the fallback executes on the initiating thread.\n" +
+                "Expected best result should be close to 3500ms + some processing time.\n" +
+                "We should also NOT see any result messages like: \'Should have timed out by this point!\' \n" +
+                "which would indicate that the timer thread couldn't make it round in time to interrupt the thread.");
     }
 
 
@@ -101,7 +121,7 @@ public class HystrixControllerTest {
             sb.append(resultHttpStatus.getReasonPhrase());
             sb.append(" -> ").append(timeToExecute);
             sb.append("ms}");
-            sb.append(" [result=]").append(body);
+            sb.append(" [result=").append(body).append("]");
             return sb.toString();
         }
     }
@@ -129,7 +149,7 @@ public class HystrixControllerTest {
         System.out.println("---------------------------------------");
         System.out.println(scenario);
         System.out.println("---------------------------------------");
-        testResults.forEach(r -> System.out.println(r));
+        testResults.forEach(System.out::println);
         System.out.println();
         System.out.println(String.format("Total Calls: %d", testResults.size()));
         OptionalLong min = testResults.stream().mapToLong(CallResult::getTimeToExecute).min();

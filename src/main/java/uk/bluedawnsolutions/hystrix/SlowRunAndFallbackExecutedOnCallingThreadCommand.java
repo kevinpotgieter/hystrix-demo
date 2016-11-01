@@ -16,21 +16,22 @@ public class SlowRunAndFallbackExecutedOnCallingThreadCommand extends HystrixCom
     @Override
     protected Result<String> run() throws Exception {
         int executionTime = 2500;
-        log.info("Timing out in run() when attempting to execute for {}ms", executionTime);
+        log.info("About to execute run() for {}ms which should be timed out", executionTime);
         Thread.sleep(executionTime);
-
+        log.info("Should have timed out by this point!");
         return () -> "Should have timed out by this point!";
     }
 
     @Override
     protected Result<String> getFallback() {
-        log.info("Returning Lambda to be executed by the actual caller...");
+        log.info("Returning a lambda to execute the fallback");
         return new DeferredResult<>(() -> {
             try {
                 Thread.sleep(2500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            log.info("Returning result from the fallback...");
             return COMMAND_GROUP_KEY;
         });
     }

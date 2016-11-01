@@ -16,8 +16,9 @@ public class SlowRunAndImmediateFallbackCommand extends HystrixCommand<String> {
     @Override
     protected String run() throws Exception {
         int executionTime = 2500;
-        log.info("Timing out in run() when attempting to execute for {}ms", executionTime);
+        log.info("About to execute run() for {}ms which should be timed out", executionTime);
         Thread.sleep(executionTime);
+        log.info("Should have timed out by this point!");
         return COMMAND_GROUP_KEY;
     }
 

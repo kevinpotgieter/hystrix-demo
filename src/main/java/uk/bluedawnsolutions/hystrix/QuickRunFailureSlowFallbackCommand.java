@@ -28,6 +28,7 @@ public class QuickRunFailureSlowFallbackCommand extends HystrixCommand<String> {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        log.info("Returning result from the fallback...");
         return COMMAND_GROUP_KEY;
     }
 }
