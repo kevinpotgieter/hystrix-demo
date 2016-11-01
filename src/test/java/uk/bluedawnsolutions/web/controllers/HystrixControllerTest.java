@@ -1,6 +1,5 @@
 package uk.bluedawnsolutions.web.controllers;
 
-import com.netflix.hystrix.Hystrix;
 import org.apache.commons.lang.time.StopWatch;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,10 +66,10 @@ public class HystrixControllerTest {
     @Test
     public void slowRunAndDeterministicFallbackExecution() throws Exception {
         submitTasksAndAwaitCompletion(() -> new RequestRunnable("/hystrix/slow-run-and-deterministic-fallback", restTemplate));
-        analyseResults("Execution is slow in run() AND slow in fallback(), but because it is wrapped in a HystrixCommand it \n" +
-                "takes a deterministic amount of time to execute.\n" +
+        analyseResults("Execution is slow in run() AND slow in fallback(), however, the fallback is wrapped in a HystrixCommand \n" +
+                "in order to achieve a deterministic amount of time to execute.\n" +
                 "Expected best time should be close to 2000ms + some processing time.\n" +
-                "We should also NOT see any result messages like: \'Should have timed out by this point!\' \n" +
+                "You will unfortuntely see many: \'Should have timed out by this point!\' result messages\n" +
                 "which would indicate that the timer thread couldn't make it round in time to interrupt the thread.");
     }
 
