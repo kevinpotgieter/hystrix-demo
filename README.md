@@ -1,13 +1,15 @@
 # hystrix-demo
-A sample repo to demonstrate how hystrix works as well as show the threads
-that the Hystrix Commands are execute on under different conditions.
+A sample application which goes some way to highlighting which threads 
+execution occurs on depending on the failure scenario.
 
-This demo hopes to demonstrate both the time requests take to execute as
-well as show (via the logging) which threads operations occur on in order
-for the user to better understand what goes on when using Hystrix in 
-your application.
+This demo hopes to also demonstrate the effect structuring your Hystrix 
+Commands has on your overall execution time. 
 
-See more on the accompanying blog post here: 
+Unless specifically set in the start of the test, all Hystrix default 
+configuration is used. i.e. 1000ms command timeout. Defaults described 
+[here](https://github.com/Netflix/Hystrix/wiki/Configuration#fallback.isolation.semaphore.maxConcurrentRequests)
+
+See more on the accompanying blog post [here](http://wp.me/sU2Qi-hystrix)
 
 ### Scenarios
  _All scenarios can be executed via tests in_ `HystrixControllerTest`
@@ -16,11 +18,12 @@ See more on the accompanying blog post here:
 2. Slow `run()` which results in timing out, and `fallback()` return immediately
 3. Slow `run()` which results in timing out, as well as a slow `fallback()`
 4. Slow `run()` which results in timing out, and a deterministic `fallback()` by means of wrapping the call in a `HystrixCommand`
-5. *Interesting* - Slow `run()` which results in timing out, and a `fallback()` which will execute on calling thread by means of some Lambda Magic
+5. Slow `run()` which results in timing out, and a `fallback()` which will execute on calling thread by means of some lambda magic
 
 ## IntelliJ IDEA users
 Installing the GrepConsole plugin is suggested if you would like to follow 
 along with the diagram in the blog post (see above). The below grep console configuration
 will highlight the appropriate thread executions which correlate to the diagram.
 
-[GrepConsole configration](https://kevinpotgieter.files.wordpress.com/2016/10/screen-shot-2016-10-31-at-09-34-30.png)
+![GrepConsole configuration]
+(https://kevinpotgieter.files.wordpress.com/2016/10/screen-shot-2016-10-31-at-09-34-30.png)
