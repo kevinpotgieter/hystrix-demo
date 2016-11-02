@@ -56,7 +56,7 @@ public class HystrixController {
     @ResponseBody
     public String slowExecutionAndFallbackOccurringOnCallingThread() throws ExecutionException, InterruptedException, TimeoutException {
         log.info("Entering controller...");
-        String result = new SlowRunAndFallbackExecutedOnCallingThreadCommand().queue().get(1, TimeUnit.SECONDS).get();
+        String result = new SlowRunAndFallbackExecutedOnCallingThreadCommand().queue().get().get();
         log.info("Exiting controller...");
         return result;
     }
