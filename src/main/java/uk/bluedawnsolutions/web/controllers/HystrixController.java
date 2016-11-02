@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 import uk.bluedawnsolutions.hystrix.*;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @RestController
 @RequestMapping("/hystrix")
@@ -18,7 +20,7 @@ public class HystrixController {
     @ResponseBody
     public String delayinFallback() throws ExecutionException, InterruptedException {
         log.info("Entering controller...");
-        String result = new QuickRunFailureSlowFallbackCommand().queue().get();
+        String result = new QuickRunFailureSlowFallbackCommand().execute();
         log.info("Exiting controller...");
         return result;
     }
@@ -27,7 +29,7 @@ public class HystrixController {
     @ResponseBody
     public String timeoutInDoRun() throws ExecutionException, InterruptedException {
         log.info("Entering controller...");
-        String reksult = new SlowRunAndImmediateFallbackCommand().queue().get();
+        String reksult = new SlowRunAndImmediateFallbackCommand().execute();
         log.info("Exiting controller...");
         return reksult;
     }
@@ -36,7 +38,7 @@ public class HystrixController {
     @ResponseBody
     public String slowExecutionAndFallback() throws ExecutionException, InterruptedException {
         log.info("Entering controller...");
-        String result = new SlowRunAndSlowFallbackCommand().queue().get();
+        String result = new SlowRunAndSlowFallbackCommand().execute();
         log.info("Exiting controller...");
         return result;
     }
@@ -45,16 +47,16 @@ public class HystrixController {
     @ResponseBody
     public String slowExecutionAndDeterministicFallback() throws ExecutionException, InterruptedException {
         log.info("Entering controller...");
-        String result = new SlowRunAndDeterministicFallbackCommand().queue().get();
+        String result = new SlowRunAndDeterministicFallbackCommand().execute();
         log.info("Exiting controller...");
         return result;
     }
 
     @RequestMapping(value = "/slow-run-and-fallback-occurring-on-calling-thread", method = RequestMethod.GET)
     @ResponseBody
-    public String slowExecutionAndFallbackOccurringOnCallingThread() throws ExecutionException, InterruptedException {
+    public String slowExecutionAndFallbackOccurringOnCallingThread() throws ExecutionException, InterruptedException, TimeoutException {
         log.info("Entering controller...");
-        String result = new SlowRunAndFallbackExecutedOnCallingThreadCommand().queue().get().get();
+        String result = new SlowRunAndFallbackExecutedOnCallingThreadCommand().queue().get(1, TimeUnit.SECONDS).get();
         log.info("Exiting controller...");
         return result;
     }
